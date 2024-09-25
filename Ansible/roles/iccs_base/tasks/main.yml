@@ -1,0 +1,90 @@
+---
+# Install dependencies like Java, PostgreSQL clients, and AWS CLI
+- name: Install required packages
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - java-11-amazon-corretto
+    - postgresql
+    - postgresql-client
+    - awscli
+
+# Set environment variables (ICCS_HOME, JAVA_HOME, and LANG)
+- name: Set ICCS environment variables
+  blockinfile:
+    path: /etc/profile
+    block: |
+      export ICCS_HOME=/home/iccs/sw
+      export JAVA_HOME=/usr/lib/jvm/java-11-amazon-corretto
+      export LANG=C.UTF-8
+
+# Create necessary directories for ICCS
+- name: Create ICCS directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: iccs
+    group: iccs
+    mode: '0755'
+  loop:
+    - /home/iccs/sw
+    - /home/iccs/sw/conf
+    - /home/iccs/sw/logs
+    - /home/iccs/sw/util
+
+# Cron_jobs_host Authenticates with AWS CodeArtifact using the defined cron_jobs host  IAM role (codeartifact_role) 
+- name: Authenticate with AWS CodeArtifact 
+  shell: |
+    aws codeartifact login \
+      --tool maven \
+      --repository {{ codeartifact_repository }} \
+      --domain {{ codeartifact_domain }} \
+      --domain-owner {{ codeartifact_domain_owner }} \
+      --region {{ aws_region }}
+  register: codeartifact_login
+  changed_when: false
+
+- name: Verify CodeArtifact login
+  debug:
+    msg: "CodeArtifact login result: {{ codeartifact_login.stdout }}"
+
+# Download ICCS Base JAR from AWS CodeArtifact
+- name: Download ICCS Base JAR
+  get_url:
+    url: "https://{{ codeartifact_domain }}-{{ codeartifact_domain_owner }}.d.codeartifact.{{ aws_region }}.amazonaws.com/maven/{{ codeartifact_repository }}/iccs-base-{{ iccs_version }}.jar"
+    dest: /home/iccs/sw/iccs-base-{{ iccs_version }}.jar
+  headers:
+    Authorization: "{{ lookup('pipe', 'aws codeartifact get-authorization-token --domain {{ codeartifact_domain }} --domain-owner {{ codeartifact_domain_owner }} --query authorizationToken --output text --region {{ aws_region }}') }}"
+
+# Run the ICCS Base JAR to extract the application files
+- name: Run ICCS Base JAR
+  shell: "java -jar /home/iccs/sw/iccs-base-{{ iccs_version }}.jar"
+  args:
+    chdir: /home/iccs/sw
+
+# Configure the Hibernate database connection using a template
+- name: Configure Hibernate database connection
+  template:
+    src: hibernate.cfg.xml.j2
+    dest: /home/iccs/sw/conf/hibernate.cfg.xml
+
+# Run the database migration script
+- name: Run Database Migration
+  shell: "/home/iccs/sw/util/updateDatabaseSchema.sh schemaUpdate --user={{ db_user }}"
+
+# Validate the database schema
+- name: Validate Database Schema
+  shell: "/home/iccs/sw/util/updateDatabaseSchema.sh validate"
+
+# Run the setup script to initialize the ICCS system
+- name: Run Setup Script
+  shell: "/home/iccs/sw/util/setup.sh"
+
+# Import standard groups into ICCS
+- name: Import Standard Groups
+  shell: "/home/iccs/sw/util/importGroups.sh --keep /home/iccs/sw/conf/defaults/groups_default.xml"
+
+# Import default bookmarks into ICCS
+- name: Import Default Bookmarks
+  shell: "/home/iccs/sw/util/importBookmarks.sh --keep /home/iccs/sw/conf/defaults/bookmarks_default.xml"

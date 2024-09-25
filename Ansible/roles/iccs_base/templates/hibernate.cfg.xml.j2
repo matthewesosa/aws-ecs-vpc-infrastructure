@@ -1,0 +1,9 @@
+<hibernate-configuration>
+  <session-factory>
+    <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
+    <property name="hibernate.connection.url">jdbc:postgresql://{{ db_host }}/{{ db_name }}</property>
+    <property name="hibernate.connection.username">{{ db_user }}</property>
+    <property name="hibernate.connection.password">{{ db_password }}</property>
+    <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+  </session-factory>
+</hibernate-configuration>

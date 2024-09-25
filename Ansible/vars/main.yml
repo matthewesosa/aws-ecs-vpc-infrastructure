@@ -1,0 +1,16 @@
+---
+# ICCS details
+iccs_version: "11.1.0"
+
+# AWS CodeArtifact configuration
+codeartifact_repository: "xconnect"
+codeartifact_domain: "xconnect"
+codeartifact_domain_owner: "388001763609"
+aws_region: "eu-central-1"
+
+# Database details
+db_host: "your-db-host"
+
+db_name: "iccsdb"
+db_user: "iccsdb_admin"
+db_password: "password-978"
