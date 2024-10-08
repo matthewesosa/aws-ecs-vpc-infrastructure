@@ -1,6 +1,0 @@
----
-- name: Install ICCS Base
-  hosts: cron_jobs_host
-  become: true
-  roles:
-    - iccs_base

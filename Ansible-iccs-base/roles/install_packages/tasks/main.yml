@@ -1,0 +1,51 @@
+---
+
+# Update the package manager's cache before installing the packages
+- name: Update all packages
+  dnf:
+    name: "*"
+    state: latest
+
+
+# Install dependencies like Java, PostgreSQL clients, AWS CLI, and Maven
+- name: Install required packages
+  dnf:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - java-17-amazon-corretto
+  #  - postgresql-client  
+    - awscli
+    - maven 
+    - python3-lxml
+    - libxslt
+
+# Create necessary directories for ICCS
+- name: Create ICCS directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: iccs
+    group: iccs
+    mode: '0755'
+  loop:
+    - /home/iccs/sw
+    - /home/iccs/sw/conf
+    - /home/iccs/sw/logs
+    - /home/iccs/sw/util
+
+# Set environment variables (ICCS_HOME, JAVA_HOME, and LANG)
+- name: Set ICCS environment variables
+  blockinfile:
+    path: /etc/profile
+    block: |
+      export ICCS_HOME=/home/iccs/sw
+      export JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto.x86_64
+      export PATH=$JAVA_HOME/bin:$PATH
+      export LANG=C.UTF-8
+      export MAVEN_CONFIG="-s /home/iccs/.m2/settings.xml"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR JAVA_HOME"
+
+- name: Apply environment variables
+  shell: source /etc/profile
+  ignore_errors: true

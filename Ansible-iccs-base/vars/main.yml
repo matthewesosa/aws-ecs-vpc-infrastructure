@@ -9,8 +9,11 @@ codeartifact_domain_owner: "388001763609"
 aws_region: "eu-central-1"
 
 # Database details
-db_host: "your-db-host"
+db_host: "iccsdb.c2w1hlhriijo.eu-central-1.rds.amazonaws.com" 
 
 db_name: "iccsdb"
 db_user: "iccsdb_admin"
 db_password: "password-978"
+
+group_id: "de.iccs"
+artifact_id: "iccs-base"

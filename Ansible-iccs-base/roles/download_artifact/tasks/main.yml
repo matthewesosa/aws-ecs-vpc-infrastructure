@@ -1,0 +1,31 @@
+# Download the ICCS Base JAR using AWS CLI
+- name: Download ICCS Base JAR from AWS CodeArtifact using AWS CLI
+  shell: |
+    aws codeartifact get-package-version-asset \
+      --domain {{ codeartifact_domain }} \
+      --domain-owner {{ codeartifact_domain_owner }} \
+      --repository {{ codeartifact_repository }} \
+      --format maven \
+      --namespace de.iccs \
+      --package iccs-base \
+      --package-version {{ iccs_version }} \
+      --asset iccs-base-{{ iccs_version }}.jar \
+      /home/iccs/sw/iccs-base-{{ iccs_version }}.jar \
+      --region {{ aws_region }}
+  register: download_result
+  failed_when: download_result.rc != 0
+
+- name: Debug download result
+  debug:
+    var: download_result
+
+# Verify that the ICCS Base JAR file was downloaded successfully
+- name: Verify ICCS Base JAR file exists
+  stat:
+    path: /home/iccs/sw/iccs-base-{{ iccs_version }}.jar
+  register: iccs_jar_file
+
+- name: Fail if ICCS Base JAR file was not downloaded
+  fail:
+    msg: "The ICCS Base JAR file was not downloaded."
+  when: not iccs_jar_file.stat.exists

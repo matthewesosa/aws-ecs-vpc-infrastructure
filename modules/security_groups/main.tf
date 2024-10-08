@@ -70,7 +70,7 @@ resource "aws_security_group" "vpc_endpoint_sg" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    security_groups = [aws_security_group.ecs_sg.id]  # Allow traffic from ECS security group
+    security_groups = [aws_security_group.ecs_sg.id, aws_security_group.cron_jobs_sg.id]  # Allow traffic from ECS security group
   }
 
   egress {

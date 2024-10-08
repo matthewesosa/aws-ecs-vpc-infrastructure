@@ -1,0 +1,31 @@
+# Run the ICCS Base JAR to extract the application files
+- name: Run ICCS Base JAR
+  shell: "java -jar /home/iccs/sw/iccs-base-{{ iccs_version }}.jar"
+  args:
+    chdir: /home/iccs/sw
+
+# Configure the Hibernate database connection using a template
+- name: Configure Hibernate database connection
+  template:
+    src: hibernate.cfg.xml.j2
+    dest: /home/iccs/sw/conf/hibernate.cfg.xml
+
+# Run the database migration script
+- name: Run Database Migration
+  shell: "/home/iccs/sw/util/updateDatabaseSchema.sh schemaUpdate --user={{ db_user }}"
+
+# Validate the database schema
+- name: Validate Database Schema
+  shell: "/home/iccs/sw/util/updateDatabaseSchema.sh validate"
+
+# Run the setup script to initialize the ICCS system
+- name: Run Setup Script
+  shell: "/home/iccs/sw/util/setup.sh"
+
+# Import standard groups into ICCS
+- name: Import Standard Groups
+  shell: "/home/iccs/sw/util/importGroups.sh --keep /home/iccs/sw/conf/defaults/groups_default.xml"
+
+# Import default bookmarks into ICCS
+- name: Import Default Bookmarks
+  shell: "/home/iccs/sw/util/importBookmarks.sh --keep /home/iccs/sw/conf/defaults/bookmarks_default.xml"
