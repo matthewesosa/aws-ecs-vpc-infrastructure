@@ -15,5 +15,7 @@ db_name: "iccsdb"
 db_user: "iccsdb_admin"
 db_password: "password-978"
 
+
+# Project's group and artifact id
 group_id: "de.iccs"
 artifact_id: "iccs-base"
